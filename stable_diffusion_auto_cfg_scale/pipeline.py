@@ -816,6 +816,7 @@ class StableDiffusionXLPipeline(
         clip_skip: Optional[int] = None,
         callback_on_step_end: Optional[Callable[[int, int, Dict], None]] = None,
         callback_on_step_end_tensor_inputs: List[str] = ["latents"],
+        auto_guidance_scale=False,
         **kwargs,
     ):
         r"""
@@ -1146,7 +1147,18 @@ class StableDiffusionXLPipeline(
                 # perform guidance
                 if self.do_classifier_free_guidance:
                     noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-                    noise_pred = noise_pred_uncond + self.guidance_scale * (noise_pred_text - noise_pred_uncond)
+                    if not auto_guidance_scale:
+                        guidance_scale_i = self.guidance_scale
+                    else:
+                        noise_pred_cfg = noise_pred_text - noise_pred_uncond
+                        x = noise_pred_text - torch.mean(noise_pred_text, dim=[1, 2, 3], keepdim=True)
+                        y = noise_pred_cfg - torch.mean(noise_pred_cfg, dim=[1, 2, 3], keepdim=True)
+                        xx = torch.mean(x * x, dim=[1, 2, 3], keepdim=True)
+                        yy = torch.mean(y * y, dim=[1, 2, 3], keepdim=True) + 1.0e-05
+                        xy = torch.mean(x * y, dim=[1, 2, 3], keepdim=True)
+                        s = (((xy * xy + yy * torch.relu(1.0 - xx)) ** 0.5) - xy) / yy
+                        guidance_scale_i = 1.0 + torch.clip(s, 0.0, 15.0)
+                    noise_pred = noise_pred_uncond + guidance_scale_i * (noise_pred_text - noise_pred_uncond)
 
                 if self.do_classifier_free_guidance and self.guidance_rescale > 0.0:
                     # Based on 3.4. in https://arxiv.org/pdf/2305.08891.pdf
