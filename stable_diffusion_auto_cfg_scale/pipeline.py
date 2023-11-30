@@ -147,7 +147,7 @@ def retrieve_timesteps(
     return timesteps, num_inference_steps
 
 
-class StableDiffusionXLPipeline(
+class CustomStableDiffusionXLPipeline(
     DiffusionPipeline,
     FromSingleFileMixin,
     StableDiffusionXLLoraLoaderMixin,
