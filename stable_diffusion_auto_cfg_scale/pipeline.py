@@ -1,3 +1,5 @@
+# based on <https://github.com/huggingface/diffusers/blob/v0.24.0/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl.py>
+
 # Copyright 2023 The HuggingFace Team. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,23 +26,23 @@ from transformers import (
     CLIPVisionModelWithProjection,
 )
 
-from ...image_processor import PipelineImageInput, VaeImageProcessor
-from ...loaders import (
+from diffusers.image_processor import PipelineImageInput, VaeImageProcessor
+from diffusers.loaders import (
     FromSingleFileMixin,
     IPAdapterMixin,
     StableDiffusionXLLoraLoaderMixin,
     TextualInversionLoaderMixin,
 )
-from ...models import AutoencoderKL, UNet2DConditionModel
-from ...models.attention_processor import (
+from diffusers.models import AutoencoderKL, UNet2DConditionModel
+from diffusers.models.attention_processor import (
     AttnProcessor2_0,
     LoRAAttnProcessor2_0,
     LoRAXFormersAttnProcessor,
     XFormersAttnProcessor,
 )
-from ...models.lora import adjust_lora_scale_text_encoder
-from ...schedulers import KarrasDiffusionSchedulers
-from ...utils import (
+from diffusers.models.lora import adjust_lora_scale_text_encoder
+from diffusers.schedulers import KarrasDiffusionSchedulers
+from diffusers.utils import (
     USE_PEFT_BACKEND,
     deprecate,
     is_invisible_watermark_available,
@@ -50,13 +52,13 @@ from ...utils import (
     scale_lora_layers,
     unscale_lora_layers,
 )
-from ...utils.torch_utils import randn_tensor
-from ..pipeline_utils import DiffusionPipeline
-from .pipeline_output import StableDiffusionXLPipelineOutput
+from diffusers.utils.torch_utils import randn_tensor
+from diffusers.pipelines.pipeline_utils import DiffusionPipeline
+from diffusers.pipelines.stable_diffusion_xl.pipeline_output import StableDiffusionXLPipelineOutput
 
 
 if is_invisible_watermark_available():
-    from .watermark import StableDiffusionXLWatermarker
+    from diffusers.pipelines.stable_diffusion_xl.watermark import StableDiffusionXLWatermarker
 
 if is_torch_xla_available():
     import torch_xla.core.xla_model as xm
