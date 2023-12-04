@@ -36,11 +36,11 @@ negative_prompt = ["cartoon, mature, abuse, blurry, faded, monochrome, watermark
 # prompt = ["retro style, 90s photo of a captivating girl having lunch in a restaurant, a bustling metropolis, neon barrettes, enigmatic setting, retro"]
 # negative_prompt = ["blurry, blur, text, watermark, render, 3D, NSFW, nude, CGI, monochrome, B&W, cartoon, painting, smooth, plastic, blurry, low-resolution, deep-fried, oversaturated"]
 
-# # Ice Queen prompt from <https://openaijourney.com/best-sdxl-models/>
+# # Ice Queen prompt from <https://openaijourney.com/best-sdxl-prompts/>
 # prompt = ["(fractal crystal skin:1.1) with( ice crown:1.4) woman, white crystal skin, (fantasy:1.3), (Anna Dittmann:1.3)"]
 # negative_prompt = ["blurry, blur, text, watermark, painting, anime, cartoon, render, 3d, nsfw, nude"]
 
-# # Rabbit 3D Render   prompt from <https://openaijourney.com/best-sdxl-models/>
+# # Rabbit 3D Render   prompt from <https://openaijourney.com/best-sdxl-prompts/>
 # prompt = ["Cute rabbit wearing a jacket, eating a carrot, 3D Style, rendering"]
 # negative_prompt = ["blurry, blur, text, watermark, render, 3D, NSFW, nude, CGI, monochrome, B&W, cartoon, painting, smooth, plastic, blurry, low-resolution, deep-fried, oversaturated"]
 
