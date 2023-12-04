@@ -1156,8 +1156,8 @@ class CustomStableDiffusionXLPipeline(
                         xx = torch.mean(x * x, dim=[1, 2, 3], keepdim=True)
                         yy = torch.mean(y * y, dim=[1, 2, 3], keepdim=True) + 1.0e-05
                         xy = torch.mean(x * y, dim=[1, 2, 3], keepdim=True)
-                        s = (((xy * xy + yy * torch.relu(1.0 - xx)) ** 0.5) - xy) / yy
-                        guidance_scale_i = 1.0 + torch.clip(s, 0.0, 15.0)
+                        guidance_scale_i = (((xy * xy + yy * torch.relu(1.0 - xx)) ** 0.5) + yy - xy) / yy
+                        guidance_scale_i = torch.clip(guidance_scale_i, 1.0, 31.0)
                     noise_pred = noise_pred_uncond + guidance_scale_i * (noise_pred_text - noise_pred_uncond)
 
                 if self.do_classifier_free_guidance and self.guidance_rescale > 0.0:

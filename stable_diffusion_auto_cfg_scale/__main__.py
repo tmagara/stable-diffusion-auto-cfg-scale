@@ -5,9 +5,7 @@ import diffusers
 from . import pipeline
 
 
-save_path = '/tmp/volatile/'
-results_folder = pathlib.Path(save_path)
-results_folder.mkdir(exist_ok=True)
+results_folder =  pathlib.Path('result')
 
 pipe = diffusers.StableDiffusionXLPipeline.from_pretrained(
     "stabilityai/stable-diffusion-xl-base-1.0",
@@ -26,29 +24,37 @@ pipe = pipeline.CustomStableDiffusionXLPipeline(
     pipe.scheduler,
 ).to("cuda")
 
-num_inference_steps = 10
-width, height, prompt, negative_prompt = (
-    1024, 1024, 
+# pipe.scheduler = diffusers.schedulers.DDIMScheduler.from_config(pipe.scheduler.config, beta_schedule="linear", timestep_spacing="trailing", set_alpha_to_one=True)
 
-    # short simple prompt
-    ["portrait, natural light, ultra detailed"], 
-    ["cartoon, mature, abuse, funny limbs, 3D CGI, blurry, faded, monochrome, watermark"],
+width, height = 1024, 1024
 
-    # ice queen prompt from <https://openaijourney.com/best-sdxl-models/>
-    # ["(fractal cystal skin:1.1) with( ice crown:1.4) woman, white crystal skin, (fantasy:1.3), (Anna Dittmann:1.3)"],
-    # ["blurry, blur, text, watermark, painting, anime, cartoon, render, 3d, nsfw, nude"],
-)
+# short simple prompt
+prompt = ["portrait, natural light, ultra detailed"]
+negative_prompt = ["cartoon, mature, abuse, blurry, faded, monochrome, watermark"]
+
+# # Retro Photography prompt from <https://openaijourney.com/best-sdxl-prompts/>
+# prompt = ["retro style, 90s photo of a captivating girl having lunch in a restaurant, a bustling metropolis, neon barrettes, enigmatic setting, retro"]
+# negative_prompt = ["blurry, blur, text, watermark, render, 3D, NSFW, nude, CGI, monochrome, B&W, cartoon, painting, smooth, plastic, blurry, low-resolution, deep-fried, oversaturated"]
+
+# # Ice Queen prompt from <https://openaijourney.com/best-sdxl-models/>
+# prompt = ["(fractal crystal skin:1.1) with( ice crown:1.4) woman, white crystal skin, (fantasy:1.3), (Anna Dittmann:1.3)"]
+# negative_prompt = ["blurry, blur, text, watermark, painting, anime, cartoon, render, 3d, nsfw, nude"]
+
+# # Rabbit 3D Render   prompt from <https://openaijourney.com/best-sdxl-models/>
+# prompt = ["Cute rabbit wearing a jacket, eating a carrot, 3D Style, rendering"]
+# negative_prompt = ["blurry, blur, text, watermark, render, 3D, NSFW, nude, CGI, monochrome, B&W, cartoon, painting, smooth, plastic, blurry, low-resolution, deep-fried, oversaturated"]
 
 generator = torch.Generator("cuda")
 seed = generator.seed()
 # seed = 42
 print(f"seed = {seed}")
 
-for label, kwargs in [
-    ("auto", {'auto_guidance_scale': True}), 
-    ("cfg4", {'auto_guidance_scale': False, 'guidance_scale': 4.0}), 
-    ("cfg7", {'auto_guidance_scale': False, 'guidance_scale': 7.0}),
-    ("cfg15", {'auto_guidance_scale': False, 'guidance_scale': 15.0}),
+for label, num_inference_steps, kwargs in [
+    ("auto_30steps", 30, {'auto_guidance_scale': True}), 
+    ("cfg1_30steps", 30, {'auto_guidance_scale': False, 'guidance_scale': 1.0}), 
+    ("cfg2_30steps", 30, {'auto_guidance_scale': False, 'guidance_scale': 2.0}), 
+    ("cfg5_30steps", 30, {'auto_guidance_scale': False, 'guidance_scale': 5.0}),
+    ("cfg15_30steps", 30, {'auto_guidance_scale': False, 'guidance_scale': 15.0}),
 ]:
     generator = generator.manual_seed(seed)
     for i in range(10):
