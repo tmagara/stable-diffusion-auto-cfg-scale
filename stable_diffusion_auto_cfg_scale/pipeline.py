@@ -816,7 +816,8 @@ class CustomStableDiffusionXLPipeline(
         clip_skip: Optional[int] = None,
         callback_on_step_end: Optional[Callable[[int, int, Dict], None]] = None,
         callback_on_step_end_tensor_inputs: List[str] = ["latents"],
-        auto_guidance_scale=False,
+        cfg_normalize=False,
+        boost_scale=0.0,
         **kwargs,
     ):
         r"""
@@ -1147,22 +1148,28 @@ class CustomStableDiffusionXLPipeline(
                 # perform guidance
                 if self.do_classifier_free_guidance:
                     noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-                    if not auto_guidance_scale:
-                        guidance_scale_i = self.guidance_scale
-                    else:
-                        noise_pred_cfg = noise_pred_text - noise_pred_uncond
-                        x = noise_pred_text - torch.mean(noise_pred_text, dim=[1, 2, 3], keepdim=True)
-                        y = noise_pred_cfg - torch.mean(noise_pred_cfg, dim=[1, 2, 3], keepdim=True)
-                        xx = torch.mean(x * x, dim=[1, 2, 3], keepdim=True)
-                        yy = torch.mean(y * y, dim=[1, 2, 3], keepdim=True) + 1.0e-05
-                        xy = torch.mean(x * y, dim=[1, 2, 3], keepdim=True)
-                        guidance_scale_i = (((xy * xy + yy * torch.relu(1.0 - xx)) ** 0.5) + yy - xy) / yy
-                        guidance_scale_i = torch.clip(guidance_scale_i, 1.0, 31.0)
-                    noise_pred = noise_pred_uncond + guidance_scale_i * (noise_pred_text - noise_pred_uncond)
+                    _, xt = latent_model_input
+                else:
+                    noise_pred_uncond, noise_pred_text = (noise_pred, noise_pred)
+                    xt = latent_model_input
 
-                if self.do_classifier_free_guidance and self.guidance_rescale > 0.0:
-                    # Based on 3.4. in https://arxiv.org/pdf/2305.08891.pdf
-                    noise_pred = rescale_noise_cfg(noise_pred, noise_pred_text, guidance_rescale=self.guidance_rescale)
+                noise_pred_cfg = noise_pred_text - noise_pred_uncond
+
+                def _projection(u, v):
+                    uv = torch.mean(u * v, dim=[1, 2, 3], keepdim=True)
+                    vv = torch.mean(v ** 2, dim=[1, 2, 3], keepdim=True) + 1.0e-05
+                    return (uv / vv) * v
+
+                def _normalize(u):
+                    uu = torch.mean(u ** 2, dim=[1, 2, 3], keepdim=True)
+                    return ((uu + 1.0e-05) ** -0.5) * u
+
+                noise_pred_boost = xt - _projection(xt, noise_pred_text)
+                if cfg_normalize:
+                    xx = torch.mean(noise_pred_text ** 2, dim=[1, 2, 3], keepdim=True)
+                    noise_pred_cfg = (torch.relu(1 - xx) ** 0.5) * _normalize(noise_pred_cfg)
+                    noise_pred_boost = (torch.relu(1 - xx) ** 0.5) * _normalize(noise_pred_boost)
+                noise_pred = noise_pred_text + (self.guidance_scale - 1.0) * noise_pred_cfg - boost_scale * noise_pred_boost
 
                 # compute the previous noisy sample x_t -> x_t-1
                 latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs, return_dict=False)[0]
